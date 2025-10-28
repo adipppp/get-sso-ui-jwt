@@ -51,6 +51,7 @@ function handleRoot(req, res) {
     const refreshToken = req.cookies['refresh_token'];
     if (refreshToken !== undefined) {
         res.json({ accessToken, refreshToken });
+        return;
     }
 
     res.json({ accessToken });
