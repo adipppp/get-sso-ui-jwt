@@ -1,13 +1,14 @@
 const ssouijwt = require('@sefriano/sso-ui-jwt');
+const { ssoConfig } = require('../config');
 
-function createTokens(config, serviceRes) {
+function createTokens(serviceRes) {
     const accessToken = ssouijwt.createToken(
-        config,
+        ssoConfig,
         ssouijwt.TokenType.AccessToken,
         serviceRes,
     );
     const refreshToken = ssouijwt.createToken(
-        config,
+        ssoConfig,
         ssouijwt.TokenType.RefreshToken,
         serviceRes,
     );
@@ -15,8 +16,8 @@ function createTokens(config, serviceRes) {
     return { accessToken, refreshToken };
 }
 
-async function validateTicket(config, ticket) {
-    const serviceRes = await ssouijwt.validateTicket(config, ticket);
+async function validateTicket(ticket) {
+    const serviceRes = await ssouijwt.validateTicket(ssoConfig, ticket);
     if (serviceRes.authenticationSuccess === undefined) {
         throw new Error('No authentication success in service response');
     }
@@ -31,7 +32,7 @@ function isAuthenticated(req) {
 
     try {
         ssouijwt.decodeToken(
-            config,
+            ssoConfig,
             ssouijwt.TokenType.AccessToken,
             accessToken,
         );
@@ -42,20 +43,21 @@ function isAuthenticated(req) {
     return true;
 }
 
-function setTokens(res, config, tokens) {
+function setTokens(res, tokens) {
     const accessTokenClaims = ssouijwt.decodeToken(
-        config,
+        ssoConfig,
         ssouijwt.TokenType.AccessToken,
         tokens.accessToken,
     );
-    const accessTokenExp = accessTokenClaims.exp;
-    const accessTokenExpiryDate = new Date(Date.now() + accessTokenExp * 1000);
-
     const refreshTokenClaims = ssouijwt.decodeToken(
-        config,
+        ssoConfig,
         ssouijwt.TokenType.RefreshToken,
         tokens.refreshToken,
     );
+
+    const accessTokenExp = accessTokenClaims.exp;
+    const accessTokenExpiryDate = new Date(Date.now() + accessTokenExp * 1000);
+
     const refreshTokenExp = refreshTokenClaims.exp;
     const refreshTokenExpiryDate = new Date(
         Date.now() + refreshTokenExp * 1000,

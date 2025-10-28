@@ -1,4 +1,5 @@
 const ssouijwt = require('@sefriano/sso-ui-jwt');
+const { ssoConfig } = require('../config');
 const {
     createTokens,
     isAuthenticated,
@@ -6,24 +7,23 @@ const {
     validateTicket,
 } = require('./utils');
 
-async function handleLogin(config, req, res) {
+async function handleLogin(req, res) {
     if (isAuthenticated(req)) {
-        const next = req.query.next ?? 'http://localhost:9000';
-        res.redirect(next);
+        res.redirect(req.query.next ?? ssoConfig.originUrl);
         return;
     }
 
     const ticket = req.query.ticket;
     if (ticket === undefined) {
-        const next = 'http://localhost:9000/login';
-        const loginUrl = `${config.casUrl}/login?service=${encodeURIComponent(next)}`;
+        const next = ssoConfig.serviceUrl;
+        const loginUrl = `${ssoConfig.casUrl}/login?service=${encodeURIComponent(next)}`;
         res.redirect(loginUrl);
         return;
     }
 
     let serviceRes;
     try {
-        serviceRes = await validateTicket(config, ticket);
+        serviceRes = await validateTicket(ticket);
     } catch (err) {
         if (err instanceof ssouijwt.AuthenticationFailedError) {
             res.status(401).send('Authentication failed');
@@ -34,11 +34,11 @@ async function handleLogin(config, req, res) {
         return;
     }
 
-    const tokens = createTokens(config, serviceRes);
+    const tokens = createTokens(serviceRes);
 
-    setTokens(res, config, tokens);
+    setTokens(res, tokens);
 
-    res.redirect(req.query.next ?? 'http://localhost:9000');
+    res.redirect(req.query.next ?? ssoConfig.originUrl);
 }
 
 function handleRoot(req, res) {
