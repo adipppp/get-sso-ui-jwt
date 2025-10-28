@@ -42,14 +42,18 @@ async function handleLogin(req, res) {
 }
 
 function handleRoot(req, res) {
-    const accessToken = req.cookies['access_token'];
-    const refreshToken = req.cookies['refresh_token'];
-    if (!(accessToken !== undefined && refreshToken !== undefined)) {
+    if (!isAuthenticated(req)) {
         res.redirect('/login');
         return;
     }
 
-    res.json({ accessToken, refreshToken });
+    const accessToken = req.cookies['access_token'];
+    const refreshToken = req.cookies['refresh_token'];
+    if (refreshToken !== undefined) {
+        res.json({ accessToken, refreshToken });
+    }
+
+    res.json({ accessToken });
 }
 
 module.exports = { ...module.exports, handleLogin, handleRoot };
